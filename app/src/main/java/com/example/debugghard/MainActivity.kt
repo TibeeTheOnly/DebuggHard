@@ -2,6 +2,7 @@ package com.example.debugghard
 
 
 import android.os.Bundle
+import android.os.Debug
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.*
@@ -12,15 +13,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
-import com.example.tododebug.ui.theme.TodoDebugTheme
+import com.example.debugghard.ui.theme.DebuggHardTheme //hibas név (ToDebugTheme -> DebuggHardTheme)
 
 data class Task(val id: Int, val title: String, var done: Boolean)
 
-class MainActivity : ComponentActivity {
-    override fun onCreate(savedInstaceState: Bundle?) {
-        super.onCreate(savedInstaceState)
+class MainActivity : ComponentActivity() { //zárójelek ComponentActivity()
+    override fun onCreate(savedInstanceState: Bundle?) { //elírás SavedInstanceState
+        super.onCreate(savedInstanceState)
         setContent {
-            TodoDebugTheme {
+            DebuggHardTheme { //hibás név ToDebugTheme -> DebuggHardTheme
                 Surface(color = MaterialTheme.colorScheme.background) {
                     TodoApp()
                 }
@@ -34,13 +35,15 @@ fun TodoApp() {
     var newTaskText = remember { mutableStateOf("") }
     var tasks = remember { mutableStateListOf<Task>() }
     var message = remember { mutableStateOf("Üdv a teendőlistában!") }
-    var idCounter = 0
+    var idCounter by remember { mutableIntStateOf(0) } //idCounter változó definiálva
 
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.Center
+        horizontalAlignment = Alignment.CenterHorizontally //Center -> CenterHorizontally
     ) {
+        Spacer(Modifier.height(16.dp)) //hiányzó Spacer
+
         Text("Teendőlista", style = MaterialTheme.typography.headlineSmall)
 
         Spacer(Modifier.height(8.dp))
@@ -50,8 +53,8 @@ fun TodoApp() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             OutlinedTextField(
-                value = newTaskText,
-                onValueChange = { value -> newTaskText = value },
+                value = newTaskText.value, //value = newTaskText -> value = newTaskText.value
+                onValueChange = { value -> newTaskText.value = value },
                 label = { Text("Új teendő") },
                 modifier = Modifier.weight(0.7f)
             )
@@ -64,7 +67,7 @@ fun TodoApp() {
                         idCounter++
                         tasks.add(newTask)
                         message.value = "Hozzáadva: ${newTask.title}"
-                        newTaskText.value == ""
+                        newTaskText.value = "" //egyenlőségjel kivéve, nem törölte fieldet
                     }
                 },
                 modifier = Modifier.weight(0.3f)
@@ -75,7 +78,7 @@ fun TodoApp() {
 
         Spacer(Modifier.height(12.dp))
 
-        Text(message)
+        Text(message.value) //message -> message.value
 
         Spacer(Modifier.height(12.dp))
 
@@ -90,15 +93,18 @@ fun TodoApp() {
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(
-                            checked = false,
-                            onCheckedChange = {
-                                task.done == !task.done
-                            }
+                            checked = task.done, //checked = false -> checked = task.done
+                            onCheckedChange = { isChecked ->
+                                val taskIndex = tasks.indexOf(task)
+                                if (taskIndex != -1) {
+                                    tasks[taskIndex] = tasks[taskIndex].copy(done = isChecked)
+                                }
+                            }//onCheckedChange teljes logikája átírva
                         )
                         Text(task.title, style = MaterialTheme.typography.bodyLarge)
                     }
                     Button(onClick = {
-                        tasks.removeAt(0)
+                        tasks.remove(task) //tasks.removeAt(0) -> tasks.remove(task)
                         message.value = "Törölve: ${task.title}"
                     }) {
                         Text("Törlés")
@@ -113,7 +119,7 @@ fun TodoApp() {
             tasks.clear()
             message.value = "Minden törölve"
         },
-            enabled = tasks.size < 0
+            enabled = tasks.isNotEmpty() //enabled = tasks.size < 0 -> enabled = tasks.isNotEmpty()
         ) {
             Text("Mindent töröl")
         }
@@ -121,7 +127,7 @@ fun TodoApp() {
         Spacer(Modifier.height(12.dp))
 
         val completed = tasks.count { it.done }
-        val remaining = tasks.count { !it.done }
-        Text("Kész: ${remaining}/${completed}")
+        val remaining = tasks.size // count helyett az összes elem száma kell
+        Text("Kész: ${completed}/${remaining}") //két változó felcserélve
     }
 }
